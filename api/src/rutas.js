@@ -1,3 +1,5 @@
+import { listarProductos, buscarProducto } from './catalogo.js';
+
 // Tabla de rutas de la API: método HTTP, patrón de la URL y función que la atiende.
 // Cada función recibe { parametros, cuerpo } y devuelve { estado, cuerpo }.
 const rutas = [
@@ -5,6 +7,27 @@ const rutas = [
     metodo: 'GET',
     patron: '/api/salud',
     manejar: () => ({ estado: 200, cuerpo: { estado: 'ok' } }),
+  },
+  {
+    metodo: 'GET',
+    patron: '/api/productos',
+    manejar: () => ({ estado: 200, cuerpo: listarProductos() }),
+  },
+  {
+    metodo: 'GET',
+    patron: '/api/productos/:id',
+    manejar: ({ parametros }) => {
+      const id = Number(parametros.id);
+      if (!Number.isInteger(id)) {
+        return { estado: 400, cuerpo: { error: 'El id del producto tiene que ser un número entero' } };
+      }
+
+      const producto = buscarProducto(id);
+      if (!producto) {
+        return { estado: 404, cuerpo: { error: 'Producto no encontrado' } };
+      }
+      return { estado: 200, cuerpo: producto };
+    },
   },
 ];
 

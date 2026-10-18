@@ -24,6 +24,16 @@ La API queda disponible en `http://localhost:3000`. Para comprobar que funciona:
 
 Para usar otro puerto, definir la variable de entorno `PUERTO`.
 
+## Endpoints
+
+| Método | Ruta | Respuesta |
+| --- | --- | --- |
+| `GET` | `/api/salud` | `{ "estado": "ok" }` |
+| `GET` | `/api/productos` | Lista de productos. |
+| `GET` | `/api/productos/:id` | Un producto. `404` si no existe, `400` si el id no es un número entero. |
+
+Los errores responden con un cuerpo `{ "error": "mensaje" }`.
+
 ## Pruebas
 
 ```bash

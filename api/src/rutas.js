@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { listarProductos, buscarProducto } from './catalogo.js';
-import { crearCarrito, agregarProducto, resumirCarrito } from './carrito.js';
+import { crearCarrito, agregarProducto, cambiarCantidad, quitarProducto, resumirCarrito } from './carrito.js';
 import { ErrorHttp } from './errores.js';
 
 // Los carritos se guardan en memoria: se pierden al reiniciar la API.
@@ -10,6 +10,16 @@ function obtenerCarrito(id) {
   const carrito = carritos.get(id);
   if (!carrito) throw new ErrorHttp(404, 'Carrito no encontrado');
   return carrito;
+}
+
+function obtenerProducto(idTexto) {
+  const id = Number(idTexto);
+  if (!Number.isInteger(id)) {
+    throw new ErrorHttp(400, 'El id del producto tiene que ser un número entero');
+  }
+  const producto = buscarProducto(id);
+  if (!producto) throw new ErrorHttp(404, 'Producto no encontrado');
+  return producto;
 }
 
 // Tabla de rutas de la API: método HTTP, patrón de la URL y función que la atiende.
@@ -28,16 +38,7 @@ const rutas = [
   {
     metodo: 'GET',
     patron: '/api/productos/:id',
-    manejar: ({ parametros }) => {
-      const id = Number(parametros.id);
-      if (!Number.isInteger(id)) {
-        throw new ErrorHttp(400, 'El id del producto tiene que ser un número entero');
-      }
-
-      const producto = buscarProducto(id);
-      if (!producto) throw new ErrorHttp(404, 'Producto no encontrado');
-      return { estado: 200, cuerpo: producto };
-    },
+    manejar: ({ parametros }) => ({ estado: 200, cuerpo: obtenerProducto(parametros.id) }),
   },
   {
     metodo: 'POST',
@@ -64,6 +65,29 @@ const rutas = [
       const actualizado = agregarProducto(carrito, producto, cuerpo.cantidad);
       carritos.set(actualizado.id, actualizado);
       return { estado: 200, cuerpo: resumirCarrito(actualizado) };
+    },
+  },
+  {
+    metodo: 'PATCH',
+    patron: '/api/carritos/:id/items/:productoId',
+    manejar: ({ parametros, cuerpo }) => {
+      const carrito = obtenerCarrito(parametros.id);
+      const producto = obtenerProducto(parametros.productoId);
+
+      const actualizado = cambiarCantidad(carrito, producto, cuerpo?.cantidad);
+      carritos.set(actualizado.id, actualizado);
+      return { estado: 200, cuerpo: resumirCarrito(actualizado) };
+    },
+  },
+  {
+    metodo: 'DELETE',
+    patron: '/api/carritos/:id/items/:productoId',
+    manejar: ({ parametros }) => {
+      const carrito = obtenerCarrito(parametros.id);
+      const producto = obtenerProducto(parametros.productoId);
+
+      carritos.set(carrito.id, quitarProducto(carrito, producto.id));
+      return { estado: 204 };
     },
   },
 ];

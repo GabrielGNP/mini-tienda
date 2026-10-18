@@ -19,12 +19,20 @@ async function pedir(metodo, ruta, cuerpo) {
     headers: { 'Content-Type': 'application/json' },
     body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),
   });
-  return { estado: respuesta.status, cuerpo: await respuesta.json() };
+  const texto = await respuesta.text();
+  return { estado: respuesta.status, cuerpo: texto ? JSON.parse(texto) : null };
 }
 
 async function nuevoCarrito() {
   const { cuerpo } = await pedir('POST', '/api/carritos');
   return cuerpo.id;
+}
+
+// Carrito con 2 unidades de Bud Mini (id 3, $45.000, stock 15).
+async function carritoConProducto() {
+  const id = await nuevoCarrito();
+  await pedir('POST', `/api/carritos/${id}/items`, { productoId: 3, cantidad: 2 });
+  return id;
 }
 
 test('POST /api/carritos crea un carrito vacío', async () => {
@@ -90,9 +98,74 @@ test('POST /api/carritos/:id/items responde 400 si la cantidad es 0', async () =
   assert.equal(estado, 400);
 });
 
+test('POST /api/carritos/:id/items responde 400 si la cantidad es negativa', async () => {
+  const id = await nuevoCarrito();
+  const { estado } = await pedir('POST', `/api/carritos/${id}/items`, { productoId: 3, cantidad: -2 });
+  const { cuerpo } = await pedir('GET', `/api/carritos/${id}`);
+
+  assert.equal(estado, 400);
+  assert.equal(cuerpo.subtotal, 0);
+});
+
 test('POST /api/carritos/:id/items responde 400 si el cuerpo no es JSON', async () => {
   const id = await nuevoCarrito();
   const respuesta = await fetch(`${url}/api/carritos/${id}/items`, { method: 'POST', body: '{ esto no es json' });
 
   assert.equal(respuesta.status, 400);
+});
+
+test('PATCH /api/carritos/:id/items/:productoId cambia la cantidad', async () => {
+  const id = await carritoConProducto();
+  const { estado, cuerpo } = await pedir('PATCH', `/api/carritos/${id}/items/3`, { cantidad: 5 });
+
+  assert.equal(estado, 200);
+  assert.equal(cuerpo.items[0].cantidad, 5);
+  assert.equal(cuerpo.subtotal, 225000);
+});
+
+test('PATCH /api/carritos/:id/items/:productoId con cantidad 0 quita el producto', async () => {
+  const id = await carritoConProducto();
+  const { estado, cuerpo } = await pedir('PATCH', `/api/carritos/${id}/items/3`, { cantidad: 0 });
+
+  assert.equal(estado, 200);
+  assert.deepEqual(cuerpo.items, []);
+});
+
+test('PATCH /api/carritos/:id/items/:productoId responde 400 con cantidad negativa o decimal', async () => {
+  const id = await carritoConProducto();
+
+  for (const cantidad of [-1, 1.5]) {
+    const { estado } = await pedir('PATCH', `/api/carritos/${id}/items/3`, { cantidad });
+    assert.equal(estado, 400, `cantidad: ${cantidad}`);
+  }
+});
+
+test('PATCH /api/carritos/:id/items/:productoId responde 409 si supera el stock', async () => {
+  const id = await carritoConProducto();
+  const { estado } = await pedir('PATCH', `/api/carritos/${id}/items/3`, { cantidad: 16 });
+
+  assert.equal(estado, 409);
+});
+
+test('PATCH /api/carritos/:id/items/:productoId responde 404 si el producto no está en el carrito', async () => {
+  const id = await carritoConProducto();
+  const { estado } = await pedir('PATCH', `/api/carritos/${id}/items/1`, { cantidad: 1 });
+
+  assert.equal(estado, 404);
+});
+
+test('DELETE /api/carritos/:id/items/:productoId quita el producto', async () => {
+  const id = await carritoConProducto();
+  const { estado } = await pedir('DELETE', `/api/carritos/${id}/items/3`);
+  const { cuerpo } = await pedir('GET', `/api/carritos/${id}`);
+
+  assert.equal(estado, 204);
+  assert.deepEqual(cuerpo.items, []);
+});
+
+test('DELETE /api/carritos/:id/items/:productoId responde 404 si el producto no está en el carrito', async () => {
+  const id = await nuevoCarrito();
+  const { estado } = await pedir('DELETE', `/api/carritos/${id}/items/3`);
+
+  assert.equal(estado, 404);
 });

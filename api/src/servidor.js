@@ -26,7 +26,12 @@ export function crearServidor() {
   });
 }
 
+// Sin cuerpo (por ejemplo, 204 No Content) la respuesta va vacía.
 function responder(res, estado, cuerpo) {
+  if (cuerpo === undefined) {
+    res.writeHead(estado);
+    return res.end();
+  }
   res.writeHead(estado, { 'Content-Type': 'application/json; charset=utf-8' });
   res.end(JSON.stringify(cuerpo));
 }

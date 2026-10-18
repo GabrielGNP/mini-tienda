@@ -41,6 +41,12 @@ cd api
 npm test
 ```
 
+## Flujo de trabajo
+
+- `dev` es la rama de trabajo. Cada Issue se resuelve en una rama `feature/N-descripcion` que sale de `dev` y vuelve por Pull Request, con **Squash and merge**.
+- `main` es la versión publicada. Solo recibe Pull Requests desde `dev`.
+- Ninguna de las dos ramas acepta `push` directo.
+
 ## Reglas de negocio
 
 - No se pueden agregar más unidades que el stock del producto.

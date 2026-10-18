@@ -1,4 +1,5 @@
 import { listarProductos, buscarProducto } from './catalogo.js';
+import { ErrorHttp } from './errores.js';
 
 // Tabla de rutas de la API: método HTTP, patrón de la URL y función que la atiende.
 // Cada función recibe { parametros, cuerpo } y devuelve { estado, cuerpo }.
@@ -19,13 +20,11 @@ const rutas = [
     manejar: ({ parametros }) => {
       const id = Number(parametros.id);
       if (!Number.isInteger(id)) {
-        return { estado: 400, cuerpo: { error: 'El id del producto tiene que ser un número entero' } };
+        throw new ErrorHttp(400, 'El id del producto tiene que ser un número entero');
       }
 
       const producto = buscarProducto(id);
-      if (!producto) {
-        return { estado: 404, cuerpo: { error: 'Producto no encontrado' } };
-      }
+      if (!producto) throw new ErrorHttp(404, 'Producto no encontrado');
       return { estado: 200, cuerpo: producto };
     },
   },

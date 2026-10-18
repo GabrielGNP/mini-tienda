@@ -90,6 +90,15 @@ test('POST /api/carritos/:id/items responde 400 si la cantidad es 0', async () =
   assert.equal(estado, 400);
 });
 
+test('POST /api/carritos/:id/items responde 400 si la cantidad es negativa', async () => {
+  const id = await nuevoCarrito();
+  const { estado } = await pedir('POST', `/api/carritos/${id}/items`, { productoId: 3, cantidad: -2 });
+  const { cuerpo } = await pedir('GET', `/api/carritos/${id}`);
+
+  assert.equal(estado, 400);
+  assert.equal(cuerpo.subtotal, 0);
+});
+
 test('POST /api/carritos/:id/items responde 400 si el cuerpo no es JSON', async () => {
   const id = await nuevoCarrito();
   const respuesta = await fetch(`${url}/api/carritos/${id}/items`, { method: 'POST', body: '{ esto no es json' });

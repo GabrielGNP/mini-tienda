@@ -34,7 +34,7 @@ test('agregarProducto no modifica el carrito original', () => {
 });
 
 test('agregarProducto rechaza cantidades que no son enteros mayores que 0', () => {
-  for (const cantidad of [0, 1.5, '2', undefined]) {
+  for (const cantidad of [0, -2, 1.5, '2', undefined]) {
     assert.throws(
       () => agregarProducto(crearCarrito('abc'), auricular, cantidad),
       { estado: 400 },

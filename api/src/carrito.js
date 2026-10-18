@@ -8,7 +8,7 @@ export function crearCarrito(id) {
 }
 
 export function agregarProducto(carrito, producto, cantidad) {
-  if (!Number.isInteger(cantidad) || cantidad === 0) {
+  if (!Number.isInteger(cantidad) || cantidad <= 0) {
     throw new ErrorHttp(400, 'La cantidad tiene que ser un número entero mayor que 0');
   }
 

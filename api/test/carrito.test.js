@@ -6,7 +6,9 @@ import {
   cambiarCantidad,
   quitarProducto,
   calcularSubtotal,
+  calcularEnvio,
   resumirCarrito,
+  COSTO_ENVIO,
 } from '../src/carrito.js';
 
 const auricular = { id: 1, nombre: 'Pulse One', precio: 89000, stock: 8 };
@@ -108,12 +110,35 @@ test('calcularSubtotal suma precio por cantidad de cada ítem', () => {
   assert.equal(calcularSubtotal(carrito), 89000 * 2 + 45000);
 });
 
-test('resumirCarrito agrega el importe de cada ítem y el subtotal', () => {
+test('calcularEnvio cobra el envío hasta $100.000 inclusive', () => {
+  assert.equal(calcularEnvio(45000), COSTO_ENVIO);
+  assert.equal(calcularEnvio(100000), COSTO_ENVIO);
+});
+
+test('calcularEnvio es gratis si el subtotal supera los $100.000', () => {
+  assert.equal(calcularEnvio(100001), 0);
+});
+
+test('calcularEnvio no cobra envío a un carrito vacío', () => {
+  assert.equal(calcularEnvio(0), 0);
+});
+
+test('resumirCarrito agrega el importe de cada ítem, subtotal, envío y total', () => {
   const carrito = agregarProducto(crearCarrito('abc'), auricular, 2);
 
   assert.deepEqual(resumirCarrito(carrito), {
     id: 'abc',
     items: [{ productoId: 1, nombre: 'Pulse One', precio: 89000, cantidad: 2, importe: 178000 }],
     subtotal: 178000,
+    envio: 0,
+    total: 178000,
   });
+});
+
+test('resumirCarrito suma el envío al total si no supera los $100.000', () => {
+  const carrito = agregarProducto(crearCarrito('abc'), otroAuricular, 1);
+  const resumen = resumirCarrito(carrito);
+
+  assert.equal(resumen.envio, COSTO_ENVIO);
+  assert.equal(resumen.total, 45000 + COSTO_ENVIO);
 });

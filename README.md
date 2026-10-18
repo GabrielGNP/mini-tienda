@@ -31,6 +31,9 @@ Para usar otro puerto, definir la variable de entorno `PUERTO`.
 | `GET` | `/api/salud` | `{ "estado": "ok" }` |
 | `GET` | `/api/productos` | Lista de productos. |
 | `GET` | `/api/productos/:id` | Un producto. `404` si no existe, `400` si el id no es un número entero. |
+| `POST` | `/api/carritos` | Crea un carrito vacío (`201`). |
+| `GET` | `/api/carritos/:id` | Ítems y subtotal del carrito. `404` si no existe. |
+| `POST` | `/api/carritos/:id/items` | Agrega un producto: `{ "productoId": 1, "cantidad": 2 }`. `400` si la cantidad no es válida, `404` si el producto no existe, `409` si no hay stock. |
 
 Los errores responden con un cuerpo `{ "error": "mensaje" }`.
 

@@ -1,4 +1,16 @@
+import { randomUUID } from 'node:crypto';
 import { listarProductos, buscarProducto } from './catalogo.js';
+import { crearCarrito, agregarProducto, resumirCarrito } from './carrito.js';
+import { ErrorHttp } from './errores.js';
+
+// Los carritos se guardan en memoria: se pierden al reiniciar la API.
+const carritos = new Map();
+
+function obtenerCarrito(id) {
+  const carrito = carritos.get(id);
+  if (!carrito) throw new ErrorHttp(404, 'Carrito no encontrado');
+  return carrito;
+}
 
 // Tabla de rutas de la API: método HTTP, patrón de la URL y función que la atiende.
 // Cada función recibe { parametros, cuerpo } y devuelve { estado, cuerpo }.
@@ -19,14 +31,39 @@ const rutas = [
     manejar: ({ parametros }) => {
       const id = Number(parametros.id);
       if (!Number.isInteger(id)) {
-        return { estado: 400, cuerpo: { error: 'El id del producto tiene que ser un número entero' } };
+        throw new ErrorHttp(400, 'El id del producto tiene que ser un número entero');
       }
 
       const producto = buscarProducto(id);
-      if (!producto) {
-        return { estado: 404, cuerpo: { error: 'Producto no encontrado' } };
-      }
+      if (!producto) throw new ErrorHttp(404, 'Producto no encontrado');
       return { estado: 200, cuerpo: producto };
+    },
+  },
+  {
+    metodo: 'POST',
+    patron: '/api/carritos',
+    manejar: () => {
+      const carrito = crearCarrito(randomUUID());
+      carritos.set(carrito.id, carrito);
+      return { estado: 201, cuerpo: resumirCarrito(carrito) };
+    },
+  },
+  {
+    metodo: 'GET',
+    patron: '/api/carritos/:id',
+    manejar: ({ parametros }) => ({ estado: 200, cuerpo: resumirCarrito(obtenerCarrito(parametros.id)) }),
+  },
+  {
+    metodo: 'POST',
+    patron: '/api/carritos/:id/items',
+    manejar: ({ parametros, cuerpo }) => {
+      const carrito = obtenerCarrito(parametros.id);
+      const producto = buscarProducto(cuerpo?.productoId);
+      if (!producto) throw new ErrorHttp(404, 'Producto no encontrado');
+
+      const actualizado = agregarProducto(carrito, producto, cuerpo.cantidad);
+      carritos.set(actualizado.id, actualizado);
+      return { estado: 200, cuerpo: resumirCarrito(actualizado) };
     },
   },
 ];

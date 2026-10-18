@@ -1,6 +1,7 @@
 import http from 'node:http';
 import { fileURLToPath } from 'node:url';
 import { buscarRuta } from './rutas.js';
+import { ErrorHttp } from './errores.js';
 
 export function crearServidor() {
   return http.createServer(async (req, res) => {
@@ -13,6 +14,9 @@ export function crearServidor() {
       const respuesta = await ruta.manejar({ parametros: ruta.parametros, cuerpo });
       responder(res, respuesta.estado, respuesta.cuerpo);
     } catch (error) {
+      if (error instanceof ErrorHttp) {
+        return responder(res, error.estado, { error: error.message });
+      }
       if (error instanceof SyntaxError) {
         return responder(res, 400, { error: 'El cuerpo no es un JSON válido' });
       }

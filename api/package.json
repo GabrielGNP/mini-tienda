@@ -1,0 +1,15 @@
+{
+  "name": "mini-tienda-api",
+  "version": "0.1.0",
+  "description": "API REST de la Mini Tienda de auriculares",
+  "type": "module",
+  "main": "src/servidor.js",
+  "scripts": {
+    "start": "node src/servidor.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "private": true
+}

@@ -1,5 +1,8 @@
 import { ErrorHttp } from './errores.js';
 
+export const COSTO_ENVIO = 5000;
+export const ENVIO_GRATIS_DESDE = 100000;
+
 // Reglas de negocio del carrito. Son funciones puras: reciben un carrito y
 // devuelven uno nuevo, sin modificar el original. Así se prueban sin servidor.
 
@@ -61,11 +64,21 @@ export function calcularSubtotal(carrito) {
   return carrito.items.reduce((suma, item) => suma + item.precio * item.cantidad, 0);
 }
 
-// Lo que devuelve la API: cada ítem con su importe y el subtotal del carrito.
+// El envío es gratis si el subtotal supera ENVIO_GRATIS_DESDE. Un carrito vacío no paga envío.
+export function calcularEnvio(subtotal) {
+  if (subtotal === 0 || subtotal > ENVIO_GRATIS_DESDE) return 0;
+  return COSTO_ENVIO;
+}
+
+// Lo que devuelve la API: cada ítem con su importe, el subtotal, el envío y el total.
 export function resumirCarrito(carrito) {
+  const subtotal = calcularSubtotal(carrito);
+  const envio = calcularEnvio(subtotal);
   return {
     id: carrito.id,
     items: carrito.items.map((item) => ({ ...item, importe: item.precio * item.cantidad })),
-    subtotal: calcularSubtotal(carrito),
+    subtotal,
+    envio,
+    total: subtotal + envio,
   };
 }

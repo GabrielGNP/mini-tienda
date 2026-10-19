@@ -32,7 +32,7 @@ Para usar otro puerto, definir la variable de entorno `PUERTO`.
 | `GET` | `/api/productos` | Lista de productos. |
 | `GET` | `/api/productos/:id` | Un producto. `404` si no existe, `400` si el id no es un número entero. |
 | `POST` | `/api/carritos` | Crea un carrito vacío (`201`). |
-| `GET` | `/api/carritos/:id` | Ítems y subtotal del carrito. `404` si no existe. |
+| `GET` | `/api/carritos/:id` | Ítems, `subtotal`, `envio` y `total` del carrito. `404` si no existe. |
 | `POST` | `/api/carritos/:id/items` | Agrega un producto: `{ "productoId": 1, "cantidad": 2 }`. `400` si la cantidad no es válida, `404` si el producto no existe, `409` si no hay stock. |
 | `PATCH` | `/api/carritos/:id/items/:productoId` | Cambia la cantidad: `{ "cantidad": 3 }`. Con `0` quita el producto. `400` si la cantidad no es válida, `404` si el producto no está en el carrito, `409` si no hay stock. |
 | `DELETE` | `/api/carritos/:id/items/:productoId` | Quita el producto (`204`). `404` si no está en el carrito. |

@@ -169,3 +169,30 @@ test('DELETE /api/carritos/:id/items/:productoId responde 404 si el producto no 
 
   assert.equal(estado, 404);
 });
+
+test('GET /api/carritos/:id cobra el envío si el subtotal no supera los $100.000', async () => {
+  const id = await carritoConProducto();
+  const { cuerpo } = await pedir('GET', `/api/carritos/${id}`);
+
+  assert.equal(cuerpo.subtotal, 90000);
+  assert.equal(cuerpo.envio, 5000);
+  assert.equal(cuerpo.total, 95000);
+});
+
+test('GET /api/carritos/:id no cobra envío si el subtotal supera los $100.000', async () => {
+  const id = await nuevoCarrito();
+  await pedir('POST', `/api/carritos/${id}/items`, { productoId: 2, cantidad: 1 });
+  const { cuerpo } = await pedir('GET', `/api/carritos/${id}`);
+
+  assert.equal(cuerpo.subtotal, 129000);
+  assert.equal(cuerpo.envio, 0);
+  assert.equal(cuerpo.total, 129000);
+});
+
+test('GET /api/carritos/:id de un carrito vacío tiene total 0', async () => {
+  const id = await nuevoCarrito();
+  const { cuerpo } = await pedir('GET', `/api/carritos/${id}`);
+
+  assert.equal(cuerpo.envio, 0);
+  assert.equal(cuerpo.total, 0);
+});
